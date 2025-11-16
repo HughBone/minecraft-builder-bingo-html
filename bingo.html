@@ -140,6 +140,12 @@ Build must be [theme]
             "square",
             "triangle",
         ],
+        ["simple"]: [
+            "bush",
+            "tree",
+            "rock",
+            "door",
+        ],
     };
 
     const sizeInput = document.getElementById("size");
@@ -166,6 +172,8 @@ Build must be [theme]
             entries = entries.slice(0, needed);
         }
 
+        entries = entries.map((entry) => replaceStringWithToken(entry));
+
         // Click entry to gray it out
         grid.innerHTML = "";
         grid.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
@@ -190,6 +198,24 @@ Build must be [theme]
 
     function randomItem(array) {
         return array[Math.floor(Math.random() * array.length)];
+    }
+
+    function randomBetween(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function replaceStringWithToken(str) {
+        return str.replace(/\[(.+?)\]/g, (_, token) => {
+            if (token === "X") {
+                return randomBetween(1, 50);
+            } else if (token === "Y") {
+                return randomBetween(1, 8);
+            }
+
+            const tokenList = data[token];
+            if (!tokenList || tokenList.length === 0) return `[${token}]`;
+            return randomItem(tokenList);
+        });
     }
 </script>
 
