@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Bingo Generator</title>
+<style>
+    body { font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; background: transparent; }
+    #grid { display: grid; gap: 5px; margin-top: 15px; }
+    .cell {
+        border: 1px solid #333;
+        padding: 12px;
+        text-align: center;
+        cursor: pointer;
+        user-select: none;
+        border-radius: 6px;
+        transition: background 0.2s, color 0.2s;
+    }
+    .done {
+        background: #bcbcbc;
+        color: #444;
+        text-decoration: line-through;
+    }
+</style>
+</head>
+
+<body>
+
+<h2>Bingo Card Generator</h2>
+<label>Card Size:</label>
+<input type="number" id="size" min="1" value="3" style="width:60px" />
+<br><br>
+
+<label>Entries (one per line):</label><br>
+<textarea id="entries" rows="7" style="width:100%">
+Add a [simple]
+Use [weird block]
+Use [functional block]
+Add some kind of [idea]
+Add [X] upside-down stairs
+Add [X] open fence gates
+Use one of every [wood]-type block
+Use [Y] unique redstone components
+Use [color] glazed terracotta
+Use [wood] shelf
+Use [stone]
+Build must be [theme]
+</textarea>
+<br><br>
+
+<button id="generate">Generate</button>
+<div id="grid"></div>
+
+<script>
+    const data = {
+        ["stone"]: [
+            "stone",
+            "cobblestone",
+            "blackstone",
+            "deepslate",
+            "granite",
+            "diorite",
+            "andesite",
+        ],
+        ["wood"]: [
+            "oak",
+            "birch",
+            "spruce",
+            "jungle",
+            "acacia",
+            "dark oak",
+            "cherry",
+            "crimson",
+            "warped",
+            "bamboo",
+            "pale oak",
+            "mangrove",
+        ],
+        ["theme"]: [
+            "cyberpunk",
+            "medieval",
+            "fantasy",
+            "post-apocalyptic",
+            "organic",
+            "creepy",
+            "tall",
+            "wide",
+            "ruined",
+            "industrial",
+            "oriental",
+            "cold",
+            "hot",
+        ],
+        ["color"]: [
+            "white",
+            "light gray",
+            "gray",
+            "black",
+            "brown",
+            "red",
+            "orange",
+            "yellow",
+            "lime",
+            "green",
+            "cyan",
+            "light blue",
+            "blue",
+            "purple",
+            "magenta",
+            "pink",
+        ],
+        ["weird block"]: [
+            "amethyst block",
+            "wet sponge",
+            "enchanting table",
+            "bell",
+            "vault",
+            "display entity",
+        ],
+        ["functional block"]: [
+            "fletching table",
+            "composter",
+            "jukebox",
+            "smoker",
+            "furnace",
+            "blast furnace",
+            "cartography table",
+            "stonecutter",
+            "grindstone",
+            "crafting table",
+            "smithing table",
+            "anvil",
+        ],
+        ["idea"]: [
+            "bridge",
+            "tower",
+            "garden",
+            "gate",
+            "machine",
+            "circle",
+            "square",
+            "triangle",
+        ],
+        ["simple"]: [
+            "bush",
+            "tree",
+            "rock",
+            "door",
+        ],
+    };
+
+    const sizeInput = document.getElementById("size");
+    const entriesInput = document.getElementById("entries");
+    const grid = document.getElementById("grid");
+
+    let noRepeats = new Set();
+    
+    document.getElementById("generate").addEventListener("click", () => {
+        noRepeats = new Set();
+
+        const size = parseInt(sizeInput.value) || 3;
+        let entries = shuffle(
+            entriesInput.value
+                .split("\n")
+                .map(x => x.trim())
+                .filter(Boolean)
+        );
+
+        // Adjust entries list to match size^2
+        const needed = size * size;
+        if (entries.length < needed) {
+            // Repeat entries if too few
+            while (entries.length < needed) {
+                entries.push(randomItem(entries));
+            }
+        } else if (entries.length > needed) {
+            entries = entries.slice(0, needed);
+        }
+
+        entries = entries.map((entry) => {
+            let newEntry = entry;
+            while (true) {
+                const res = replaceStringWithToken(newEntry);
+                if (res !== null) return res;
+                newEntry = randomItem(entries);
+            }
+        });
+
+        // Click entry to gray it out
+        grid.innerHTML = "";
+        grid.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+        entries.forEach(text => {
+            const cell = document.createElement("div");
+            cell.className = "cell";
+            cell.textContent = text;
+            cell.addEventListener("click", () => {
+                cell.classList.toggle("done");
+            });
+            grid.appendChild(cell);
+        });
+    });
+
+    document.addEventListener("DOMContentLoaded", function() {
+      const button = document.getElementById("generate");
+      button.click();
+    });
+
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    function randomItem(array) {
+        return array[Math.floor(Math.random() * array.length)];
+    }
+
+    function randomBetween(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function replaceStringWithToken(str) {
+        if (noRepeats.has(str)) return null;
+        
+        let success = false;
+        const newStr = str.replace(/\[(.+?)\]/g, (_, token) => {
+            if (token === "X") {
+                noRepeats.add(str);
+                success = true;
+                return randomBetween(1, 50);
+            } else if (token === "Y") {
+                noRepeats.add(str);
+                success = true;
+                return randomBetween(1, 8);
+            }
+
+            const tokenList = data[token];
+            if (!tokenList?.length) return "";
+            const newEntry = randomItem(tokenList);
+            if (noRepeats.has(newEntry)) return "";
+
+            noRepeats.add(newEntry);
+            success = true;
+            return newEntry;
+        });
+
+        return success ? newStr : null;
+    }
+</script>
+
+</body>
+</html>
+
