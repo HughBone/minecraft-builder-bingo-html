@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Bingo Generator</title>
+<style>
+    body { font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; }
+    #grid { display: grid; gap: 5px; margin-top: 15px; }
+    .cell {
+        border: 1px solid #333;
+        padding: 12px;
+        text-align: center;
+        cursor: pointer;
+        user-select: none;
+        border-radius: 6px;
+        transition: background 0.2s, color 0.2s;
+    }
+    .done {
+        background: #bcbcbc;
+        color: #444;
+        text-decoration: line-through;
+    }
+</style>
+</head>
+<body>
+
+<h2>Bingo Card Generator</h2>
+
+<label>Card Size:</label>
+<input type="number" id="size" min="1" value="5" style="width:60px" />
+<br><br>
+
+<label>Entries (one per line):</label><br>
+<textarea id="entries" rows="7" style="width:100%">
+Free
+Coffee
+Bug found
+Refactor
+Ship to production
+Meeting cancelled
+Weekend deploy
+Rubber ducking
+Dark mode enabled
+</textarea>
+<br><br>
+
+<button id="generate">Generate</button>
+
+<div id="grid"></div>
+
+<script>
+const sizeInput = document.getElementById("size");
+const entriesInput = document.getElementById("entries");
+const grid = document.getElementById("grid");
+
+document.getElementById("generate").addEventListener("click", () => {
+    const size = parseInt(sizeInput.value) || 5;
+    let entries = entriesInput.value.split("\n").map(x => x.trim()).filter(Boolean);
+
+    // Adjust entries list to match size^2
+    const needed = size * size;
+    if (entries.length < needed) {
+        // Repeat entries if too few
+        const repeat = [...entries];
+        while (entries.length < needed) entries.push(...repeat);
+        entries = entries.slice(0, needed);
+    } else if (entries.length > needed) {
+        entries = entries.slice(0, needed);
+    }
+
+    grid.innerHTML = "";
+    grid.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+
+    entries.forEach(text => {
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        cell.textContent = text;
+
+        cell.addEventListener("click", () => {
+            cell.classList.toggle("done");
+        });
+
+        grid.appendChild(cell);
+    });
+});
+</script>
+
+</body>
+</html>
+
