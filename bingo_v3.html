@@ -333,9 +333,7 @@ add a [simple] made out of [stone]
             }
 
             let tokenList = data[token];
-            if (!tokenList) {
-                return `<INVALID: '${token}'>`;
-            }
+            if (!tokenList) return `<INVALID: '${token}'>`;
 
             // Refresh token data when we run out
             if (!tokenList.length) {
@@ -344,7 +342,7 @@ add a [simple] made out of [stone]
             }
 
             const candidate = randomItem(tokenList);
-            delete data[token][candidate];
+            data[token] = tokenList.filter(x => x !== candidate);
             return candidate;
         });
 
